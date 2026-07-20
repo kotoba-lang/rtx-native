@@ -1,0 +1,67 @@
+(ns kotoba.rtx-native-test
+  (:require [clojure.java.io :as io]
+            [clojure.java.shell :as shell]
+            [clojure.string :as str]
+            [clojure.test :refer [deftest is testing]]
+            [kotoba.compiler.core :as compiler]
+            [kotoba.compiler.ir :as ir]))
+
+(def source (slurp "src/kotoba/rtx_native.kotoba"))
+
+(def expected
+  {'adr-value "ADR-2605261800"
+   'phase-value "R1.0-path-reservation"
+   'kami-name-value "kami-rtx-native"
+   'status-value "contingent-fallback-pending-viability-gate"
+   'triggered-by-value "Mitsuba 3 wgpu backend gate fail (R1.2)"
+   'nv-compat-primary "OptiX"
+   'nv-compat-secondary "RTX Renderer"
+   'activated? false})
+
+(defn compiler-root []
+  (nth (iterate #(.getParent ^java.nio.file.Path %)
+                (java.nio.file.Path/of (.toURI (io/resource "kotoba/compiler/core.clj"))))
+       4))
+
+(defn base64 [value]
+  (.encodeToString (java.util.Base64/getEncoder) value))
+
+(deftest reference-preserves-reservation-metadata
+  (let [artifact (compiler/compile-source source :js-kotoba-v1)]
+    (doseq [[function value] expected]
+      (is (= value (ir/execute (:kir artifact) function []))))
+    (is (= #{} (set (:effects (:kir artifact)))))
+    (is (= :kotoba.floating-point/ieee-754-f32-f64-v7
+           (:floating-point-policy artifact)))))
+
+(deftest restricted-javascript-and-typed-wasm-conform
+  (let [javascript (compiler/compile-source source :js-kotoba-v1)
+        wasm (compiler/compile-source source :wasm32-browser-kotoba-v1)
+        js64 (base64 (.getBytes ^String (:source javascript) "UTF-8"))
+        wasm64 (base64 ^bytes (:bytes wasm))
+        expected-js (str "{" (str/join "," (map (fn [[function value]]
+                                                    (str (pr-str (name function)) ":" (pr-str value)))
+                                                  expected)) "}")
+        probe
+        (shell/sh "node" "--input-type=module" "-e"
+                  (str "import(process.argv[1]).then(async host=>{"
+                       "const j=await import('data:text/javascript;base64," js64 "');"
+                       "const w=await host.instantiateKotoba(Buffer.from(process.argv[2],'base64'));"
+                       "const a=j.instantiateKotoba({}),b=w.instance.exports,e=" expected-js ";"
+                       "for(const [name,value] of Object.entries(e)){"
+                       "if(a[name]()!==value||b[name]()!==value)process.exit(2)}"
+                       "}).catch(e=>{console.error(e);process.exit(99)})")
+                  (.toString (.toUri (.resolve (compiler-root) "runtime/browser-host.mjs")))
+                  wasm64)]
+    (testing "both host targets instantiate and preserve exact observable values"
+      (is (zero? (:exit probe)) (:err probe)))
+    (is (= [0 97 115 109]
+           (mapv #(bit-and (int %) 255) (take 4 (:bytes wasm)))))))
+
+(deftest production-source-authority
+  (is (= ["src/kotoba/rtx_native.kotoba"]
+         (->> (file-seq (io/file "src"))
+              (filter #(.isFile %))
+              (map str)
+              sort
+              vec))))
