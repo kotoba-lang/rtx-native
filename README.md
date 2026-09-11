@@ -9,6 +9,6 @@ restricted JavaScript and typed Wasm without a JVM or ClojureScript production
 runtime. See `docs/adr/0001-kotoba-source-authority.md` for the ABI decision.
 
 ```sh
-clojure -M:test
-clojure -M:lint
+kbb -M:test
+kbb -M:lint
 ```
