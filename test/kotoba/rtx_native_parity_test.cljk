@@ -1,6 +1,6 @@
 (ns kotoba.rtx-native-parity-test
   "Parity gate between `src/kotoba/rtx_native.kotoba` (the semantic authority) and
-  `src/kotoba/rtx_native.cljc` (the load path a Clojure/ClojureScript consumer
+  `src/kotoba/rtx_native.cljk` (the load path a Clojure/ClojureScript consumer
   requires).
 
   Shape follows `kotoba-lang/css` (`css.kotoba-parity-test`), `kotoba-lang/dsl-core`
@@ -10,7 +10,7 @@
   test-only dependency.
 
   WHY THE .cljc EXISTS AT ALL. `c5e3c158` (2026-07-20) deleted
-  `src/kotoba/rtx_native.cljc` and put the `.kotoba` at that path. A `.kotoba` is on no
+  `src/kotoba/rtx_native.cljk` and put the `.kotoba` at that path. A `.kotoba` is on no
   Clojure classpath, so `kotoba.rtx-native` stopped being loadable by every runtime
   this workspace ranks above the native path. The `.cljc` restored beside it is the
   load path; the `.kotoba` remains the authority.

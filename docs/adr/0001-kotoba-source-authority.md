@@ -28,18 +28,18 @@ instantiability, typed ABI conformance, and observable semantic equality.
 
 ## Amendment — 2026-08-13: authority and load path are different things
 
-The migration that this ADR records deleted `src/kotoba/rtx_native.cljc` and left only
+The migration that this ADR records deleted `src/kotoba/rtx_native.cljk` and left only
 `src/kotoba/rtx_native.kotoba`. A `.kotoba` file is on no Clojure classpath, so from that
 commit onward `kotoba.rtx-native` could not be loaded by ANY runtime this workspace
 ranks above the native path (`kotoba wasm` > `clojurewasm` > ClojureScript > nbb,
 and the JVM below them). "Production `.clj`/`.cljc`/`.cljs` sources are forbidden"
 was read as "delete the load path", and the two are not the same requirement.
 
-`src/kotoba/rtx_native.cljc` is restored beside the `.kotoba`, and:
+`src/kotoba/rtx_native.cljk` is restored beside the `.kotoba`, and:
 
 * **the `.kotoba` remains the sole semantic authority.** Nothing about the migration
   is reverted. The restored file is a load path, not a second design.
-* **a parity gate holds the two equal.** `test/kotoba/rtx_native_parity_test.clj` compiles the
+* **a parity gate holds the two equal.** `test/kotoba/rtx_native_parity_test.cljk` compiles the
   `.kotoba` here and runs it through the reference evaluator in the same JVM,
   asserting agreement value by value. Where agreement is impossible it says so in a
   named test rather than dropping the case from the comparison.
