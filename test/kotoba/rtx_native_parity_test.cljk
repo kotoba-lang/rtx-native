@@ -37,7 +37,7 @@
      is stated here rather than passed over.
 
   3. `main` is a wasm entry point, not library API, and is not mirrored."
-  (:require [clojure.test :refer [deftest is testing]]
+  (:require [kotoba.test :refer [deftest is testing]]
             [kotoba.compiler.core :as compiler]
             [kotoba.compiler.ir :as ir]
             [kotoba.rtx-native :as rtx]))
